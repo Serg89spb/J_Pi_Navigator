@@ -175,29 +175,37 @@ python3 -m pip install --upgrade pip --break-system-packages
 python3 -m pip install ultralytics==8.4.21 openvino==2026.0.0 numpy==2.4.3 opencv-python --break-system-packages
 
 echo "=== 12. Сборка Jeweler_Nav ==="
-# 1. Делаем линк пакета из репозитория в воркспейс ROS2
-# Это позволит править код в папке репозитория, и он сразу будет готов к сборке
 
-# Автоматически определяем абсолютный путь к папке, где лежит этот инсталлер
-SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
+# 1. Находим корень репозитория J_Pi_Navigator (где лежит этот install.sh)
+REPO_DIR="$( cd "$( dirname "${BASH_SOURCE}" )" &> /dev/null && pwd )"
 
-# Вычисляем путь к папке пакета ROS2 внутри репозитория
-JEWELER_NAV_SRC="${SCRIPT_DIR}/ros2_ws/src/jeweler_nav"
+# 2. Путь к пакету ROS2 ВНУТРИ репозитория
+JEWELER_NAV_IN_REPO="${REPO_DIR}/ros2_ws/src/jeweler_nav"
 
-# 1. Делаем линк пакета из репозитория в воркспейс ROS2
-# Создаем папку назначения, если ее еще нет, чтобы ln не выдал ошибку
-mkdir -p "$HOME/ros2_ws/src"
-ln -sfn "$JEWELER_NAV_SRC" "$HOME/ros2_ws/src/jeweler_nav"
+# 3. Путь, где находятся Python-скрипты ВНУТРИ репозитория (для chmod)
+SCRIPTS_DIR="${JEWELER_NAV_IN_REPO}/scripts"
 
-# 2. Делаем Python скрипты исполняемыми
-chmod +x "${JEWELER_NAV_SRC}/scripts/"*.py
+# 4. Путь к целевому воркспейсу в корне пользователя (/home/jeweler/ros2_ws/src)
+USER_ROS2_WS_SRC="$HOME/ros2_ws/src"
 
-# 3. Сборка пакета
+# 5. Создаем папку src в корневом воркспейсе пользователя, если её ещё нет
+mkdir -p "$USER_ROS2_WS_SRC"
+
+# 6. Удаляем старые битые ссылки, если они остались от прошлых запусков
+rm -f "$USER_ROS2_WS_SRC/jeweler_nav"
+
+# 7. Делаем линк папки пакета ИЗ репозитория В пользовательский воркспейс
+ln -sfn "$JEWELER_NAV_IN_REPO" "$USER_ROS2_WS_SRC/jeweler_nav"
+
+# 8. Делаем Python скрипты исполняемыми прямо внутри репозитория
+chmod +x "${SCRIPTS_DIR}/"*.py
+
+# 9. Переходим в корневой пользовательский воркспейс и собираем
 cd "$HOME/ros2_ws"
 source /opt/ros/jazzy/setup.bash
 colcon build --symlink-install --packages-select jeweler_nav
 
-# 4. Сорсинг
+# 10. Добавляем сорсинг в .bashrc
 if ! grep -q "ros2_ws/install/setup.bash" ~/.bashrc; then
   echo "source ~/ros2_ws/install/setup.bash" >> ~/.bashrc
 fi
