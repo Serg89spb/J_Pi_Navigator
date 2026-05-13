@@ -1,0 +1,29 @@
+<?xml version="1.0"?>
+<robot name="jeweler_bot">
+  <link name="base_link"/>
+  
+  <!-- Лазер -->
+  <link name="laser_frame"/>
+  <joint name="laser_joint" type="fixed">
+    <parent link="base_link"/>
+    <child link="laser_frame"/>
+    <origin xyz="0.0772 0.0 0.2036" rpy="3.14159 0 3.14159"/> 
+  </joint>
+
+  <!-- Камера -->
+  <link name="camera_link"/>
+  <joint name="camera_joint" type="fixed">
+    <parent link="base_link"/>
+    <child link="camera_link"/>
+    <origin xyz="0.1955 0.0 0.184" rpy="0 0.384 0"/> 
+  </joint>
+
+  <!-- Оптический фрейм для OpenCV/YOLO -->
+  <link name="camera_optical_link"/>
+  <joint name="camera_optical_joint" type="fixed">
+    <parent link="camera_link"/>
+    <child link="camera_optical_link"/>
+    <origin xyz="0 0 0" rpy="-1.5708 0 -1.5708"/>
+  </joint>
+</robot>
+
