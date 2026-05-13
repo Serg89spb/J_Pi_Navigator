@@ -1,3 +1,5 @@
+// Copyright (c) 2026 Sergey Shavlyuga | Jeweler Project | MIT License
+
 #include "jeweler_nav/ControlNode.hpp"
 
 namespace jeweler_nav {

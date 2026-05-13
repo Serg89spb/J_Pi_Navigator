@@ -1,3 +1,6 @@
+# -*- coding: utf-8 -*-
+# Copyright (c) 2026 Sergey Shavlyuga | Jeweler Project | MIT License
+
 import os
 from launch import LaunchDescription
 from launch_ros.actions import Node

@@ -1,3 +1,5 @@
+// Copyright (c) 2026 Sergey Shavlyuga | Jeweler Project | MIT License
+
 #pragma once
 #include "jeweler_nav/BTNode.hpp"
 

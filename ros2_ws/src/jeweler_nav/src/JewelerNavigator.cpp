@@ -1,3 +1,5 @@
+// Copyright (c) 2026 Sergey Shavlyuga | Jeweler Project | MIT License
+
 #include "jeweler_nav/JewelerNavigator.hpp"
 #include <tf2/utils.h>
 #include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>

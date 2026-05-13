@@ -1,4 +1,7 @@
 #!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+# Copyright (c) 2026 Sergey Shavlyuga | Jeweler Project | MIT License
+
 import cv2
 from ultralytics import YOLO
 import subprocess

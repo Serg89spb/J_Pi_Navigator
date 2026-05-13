@@ -1,4 +1,8 @@
 #!/usr/bin/env python3
+
+# -*- coding: utf-8 -*-
+# Copyright (c) 2026 Sergey Shavlyuga | Jeweler Project | MIT License
+
 import rclpy
 from rclpy.node import Node
 from std_msgs.msg import Empty

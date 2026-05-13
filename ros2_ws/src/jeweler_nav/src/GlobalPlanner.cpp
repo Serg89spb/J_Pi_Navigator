@@ -1,3 +1,5 @@
+// Copyright (c) 2026 Sergey Shavlyuga | Jeweler Project | MIT License
+
 #include "jeweler_nav/GlobalPlanner.hpp"
 #include "jeweler_nav/ObstacleManager.hpp"
 #include "jeweler_nav/BTLogger.hpp"
