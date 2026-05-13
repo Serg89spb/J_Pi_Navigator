@@ -69,65 +69,103 @@ fi
 echo "Swap настроен:"
 free -h
 
+# Определяем рабочую директорию, чтобы загрузки не мусорили где попало
+# (например, создадим временную папку внутри домашней директории)
+BUILD_DIR="$HOME/jeweler_build_deps"
+mkdir -p "$BUILD_DIR"
+cd "$BUILD_DIR"
+
 echo "=== 6. Сборка и установка libpisp (обязательно для RPi 5) ==="
-rm -rf libpisp
-git clone --depth 1 https://github.com/raspberrypi/libpisp.git
-cd libpisp
-meson setup build --buildtype=release
-ninja -C build
-sudo ninja -C build install
-sudo ldconfig
-cd ..
+# Проверяем, установлена ли библиотека в систему
+if ldconfig -p | grep -q libpisp; then
+    echo "libpisp уже установлена в системе. Пропускаем."
+else
+    echo "libpisp не найдена. Начинаем сборку..."
+    if [ ! -d "libpisp" ]; then
+        git clone --depth 1 https://github.com/raspberrypi/libpisp.git
+    fi
+    cd libpisp
+    # Проверяем, была ли уже создана папка сборки, чтобы не делать meson setup дважды
+    [ ! -d "build" ] && meson setup build --buildtype=release
+    ninja -C build
+    sudo ninja -C build install
+    sudo ldconfig
+    cd "$BUILD_DIR"
+fi
 
 echo "=== 7. Сборка и установка libcamera ==="
-rm -rf libcamera
-git clone --depth 1 https://github.com/raspberrypi/libcamera.git
-cd libcamera
-meson setup build --buildtype=release -Dgstreamer=enabled -Dpycamera=enabled
-ninja -C build
-sudo ninja -C build install
-sudo ldconfig
-cd ..
+# Проверяем наличие libcamera.so
+if ldconfig -p | grep -q libcamera\.so; then
+    echo "libcamera уже установлена в системе. Пропускаем."
+else
+    echo "libcamera не найдена. Начинаем сборку..."
+    if [ ! -d "libcamera" ]; then
+        git clone --depth 1 https://github.com/raspberrypi/libcamera.git
+    fi
+    cd libcamera
+    [ ! -d "build" ] && meson setup build --buildtype=release -Dgstreamer=enabled -Dpycamera=enabled
+    ninja -C build
+    sudo ninja -C build install
+    sudo ldconfig
+    cd "$BUILD_DIR"
+fi
 
 echo "=== 8. Сборка и установка rpicam-apps ==="
-rm -rf rpicam-apps
-git clone --depth 1 https://github.com/raspberrypi/rpicam-apps.git
-cd rpicam-apps
-meson setup build --buildtype=release
-ninja -C build
-sudo ninja -C build install
-sudo ldconfig
-cd ..
+# У rpicam-apps есть бинарник rpicam-still. Проверим его наличие в системе
+if which rpicam-still > /dev/null 2>&1; then
+    echo "rpicam-apps уже установлены в системе. Пропускаем."
+else
+    echo "rpicam-apps не найдены. Начинаем сборку..."
+    if [ ! -d "rpicam-apps" ]; then
+        git clone --depth 1 https://github.com/raspberrypi/rpicam-apps.git
+    fi
+    cd rpicam-apps
+    [ ! -d "build" ] && meson setup build --buildtype=release
+    ninja -C build
+    sudo ninja -C build install
+    sudo ldconfig
+    cd "$BUILD_DIR"
+fi
 
 echo "=== 9. Фикс путей библиотек для Ubuntu ==="
-echo "/usr/local/lib/aarch64-linux-gnu" | sudo tee /etc/ld.so.conf.d/rpicam.conf
-sudo ldconfig
+# Запись файла конфигурации тоже сделаем умной, чтобы не дублировать строки
+if [ ! -f /etc/ld.so.conf.d/rpicam.conf ]; then
+    echo "/usr/local/lib/aarch64-linux-gnu" | sudo tee /etc/ld.so.conf.d/rpicam.conf
+    sudo ldconfig
+fi
 
 echo "=== 10. Настройка ROS 2 Workspace и Лидара ==="
-# 1. Создаем воркспейс, если его еще нет
-mkdir -p ~/ros2_ws/src
-cd ~/ros2_ws/src
+mkdir -p "$HOME/ros2_ws/src"
+cd "$HOME/ros2_ws/src"
 
-# 2. Клонируем драйвер лидара (если папки еще нет)
 if [ ! -d "sllidar_ros2" ]; then
+    echo "Клонирование драйвера лидара..."
     git clone https://github.com/Slamtec/sllidar_ros2.git
 fi
 
-# 3. Установка udev-правил (чтобы лидар всегда был на /dev/rplidar и с правами)
 echo "Настройка udev правил для лидара..."
 cd sllidar_ros2
-# Скрипт Slamtec требует sudo внутри
 chmod +x scripts/create_udev_rules.sh
 sudo ./scripts/create_udev_rules.sh
-cd ~/ros2_ws
 
-# 4. Сборка лидара
+# Возвращаемся в корень воркспейса для сборки
+cd "$HOME/ros2_ws"
 source /opt/ros/jazzy/setup.bash
-colcon build --symlink-install --packages-select sllidar_ros2
 
-# 5. Добавляем сорсинг воркспейса в .bashrc, чтобы команды ros2 работали сразу
-if ! grep -q "ros2_ws/install/setup.bash" ~/.bashrc; then
+# Проверяем, собран ли уже пакет sllidar_ros2. Если папка install/sllidar_ros2 существует, colcon можно пропустить
+if [ ! -d "install/sllidar_ros2" ]; then
+    echo "Сборка пакета лидара..."
+    colcon build --symlink-install --packages-select sllidar_ros2
+else
+    echo "Пакет sllidar_ros2 уже собран. Пропускаем."
+fi
+
+# 5. Добавляем сорсинг воркспейса в .bashrc (проверяем, чтобы не дублировать строки)
+if ! grep -q "opt/ros/jazzy/setup.bash" ~/.bashrc; then
   echo "source /opt/ros/jazzy/setup.bash" >> ~/.bashrc
+fi
+
+if ! grep -q "ros2_ws/install/setup.bash" ~/.bashrc; then
   echo "source ~/ros2_ws/install/setup.bash" >> ~/.bashrc
 fi
 
@@ -139,13 +177,23 @@ python3 -m pip install ultralytics==8.4.21 openvino==2026.0.0 numpy==2.4.3 openc
 echo "=== 12. Сборка Jeweler_Nav ==="
 # 1. Делаем линк пакета из репозитория в воркспейс ROS2
 # Это позволит править код в папке репозитория, и он сразу будет готов к сборке
-ln -sfn ~/Jeweler_Software/ros2_ws/src/jeweler_nav ~/ros2_ws/src/jeweler_nav
+
+# Автоматически определяем абсолютный путь к папке, где лежит этот инсталлер
+SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
+
+# Вычисляем путь к папке пакета ROS2 внутри репозитория
+JEWELER_NAV_SRC="${SCRIPT_DIR}/ros2_ws/src/jeweler_nav"
+
+# 1. Делаем линк пакета из репозитория в воркспейс ROS2
+# Создаем папку назначения, если ее еще нет, чтобы ln не выдал ошибку
+mkdir -p "$HOME/ros2_ws/src"
+ln -sfn "$JEWELER_NAV_SRC" "$HOME/ros2_ws/src/jeweler_nav"
 
 # 2. Делаем Python скрипты исполняемыми
-chmod +x ~/Jeweler_Software/ros2_ws/src/jeweler_nav/scripts/*.py
+chmod +x "${JEWELER_NAV_SRC}/scripts/"*.py
 
 # 3. Сборка пакета
-cd ~/ros2_ws
+cd "$HOME/ros2_ws"
 source /opt/ros/jazzy/setup.bash
 colcon build --symlink-install --packages-select jeweler_nav
 
