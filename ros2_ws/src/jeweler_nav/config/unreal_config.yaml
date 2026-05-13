@@ -1,0 +1,14 @@
+ue_lidar_bridge:
+  ros__parameters:
+    ue_ip: "0.0.0.0"
+    lidar_port: 12345
+
+ue_odom_bridge:
+  ros__parameters:
+    ue_ip: "0.0.0.0"
+    odom_port: 12346
+    ue_port: 12347
+
+ue_yolo_laser_node:
+  ros__parameters:
+    yolo_port: 12348

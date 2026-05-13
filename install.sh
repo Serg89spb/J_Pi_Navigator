@@ -176,38 +176,22 @@ python3 -m pip install ultralytics==8.4.21 openvino==2026.0.0 numpy==2.4.3 openc
 
 echo "=== 12. Сборка Jeweler_Nav ==="
 
-# 1. Находим корень репозитория J_Pi_Navigator (где лежит этот install.sh)
-REPO_DIR="$( cd "$( dirname "${BASH_SOURCE}" )" &> /dev/null && pwd )"
+# 1. Скрипт запущен из корня репозитория
+# Используем PROJECT_ROOT
+REPO_DIR="$PROJECT_ROOT"
+JEWELER_NAV_SRC="${REPO_DIR}/ros2_ws/src/jeweler_nav"
 
-# 2. Путь к пакету ROS2 ВНУТРИ репозитория
-JEWELER_NAV_IN_REPO="${REPO_DIR}/ros2_ws/src/jeweler_nav"
+# 2. Делаем Python скрипты исполняемыми прямо в репозитории
+chmod +x "${JEWELER_NAV_SRC}/scripts"/*.py
 
-# 3. Путь, где находятся Python-скрипты ВНУТРИ репозитория (для chmod)
-SCRIPTS_DIR="${JEWELER_NAV_IN_REPO}/scripts"
+# 3. Привязываем пакет из репозитория к воркспейсу пользователя через симлинк
+mkdir -p "$HOME/ros2_ws/src"
+rm -rf "$HOME/ros2_ws/src/jeweler_nav"
+ln -sfn "${JEWELER_NAV_SRC}" "$HOME/ros2_ws/src/jeweler_nav"
 
-# 4. Путь к целевому воркспейсу в корне пользователя (/home/jeweler/ros2_ws/src)
-USER_ROS2_WS_SRC="$HOME/ros2_ws/src"
-
-# 5. Создаем папку src в корневом воркспейсе пользователя, если её ещё нет
-mkdir -p "$USER_ROS2_WS_SRC"
-
-# 6. Удаляем старые битые ссылки, если они остались от прошлых запусков
-rm -f "$USER_ROS2_WS_SRC/jeweler_nav"
-
-# 7. Делаем линк папки пакета ИЗ репозитория В пользовательский воркспейс
-ln -sfn "$JEWELER_NAV_IN_REPO" "$USER_ROS2_WS_SRC/jeweler_nav"
-
-# 8. Делаем Python скрипты исполняемыми прямо внутри репозитория
-chmod +x "${SCRIPTS_DIR}/"*.py
-
-# 9. Переходим в корневой пользовательский воркспейс и собираем
+# 4. Переходим в воркспейс и собираем пакет
 cd "$HOME/ros2_ws"
 source /opt/ros/jazzy/setup.bash
 colcon build --symlink-install --packages-select jeweler_nav
-
-# 10. Добавляем сорсинг в .bashrc
-if ! grep -q "ros2_ws/install/setup.bash" ~/.bashrc; then
-  echo "source ~/ros2_ws/install/setup.bash" >> ~/.bashrc
-fi
 
 echo "=== Установка завершена! Перезагрузите систему: sudo reboot ==="

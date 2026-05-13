@@ -10,15 +10,25 @@ class UELidarBridge(Node):
         super().__init__('ue_lidar_bridge')
         self.publisher_ = self.create_publisher(LaserScan, 'scan', 10)
         
+        # Объявляем параметры ROS 2
+        self.declare_parameter('ue_ip', '192.168.0.159')
+        self.declare_parameter('lidar_port', 12345)
+
+        # Считываем значения из конфига
+        self.ue_ip = self.get_parameter('ue_ip').get_parameter_value().string_value
+        self.lidar_port = self.get_parameter('lidar_port').get_parameter_value().integer_value
+
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         # Увеличиваем системный буфер сокета, чтобы пакеты не терялись на уровне ядра
         self.sock.setsockopt(socket.SOL_SOCKET, socket.SO_RCVBUF, 65536)
-        self.sock.bind(('0.0.0.0', 12345))
+        
+        # Привязываем сокет к считанному порту
+        self.sock.bind(('0.0.0.0', self.lidar_port))
         self.sock.setblocking(False)
         
         # Таймер на 100Гц для проверки сокета
         self.create_timer(0.01, self.receive_lidar) 
-        self.get_logger().info("Lidar Bridge: Работаю. Жду данные из Unreal...")
+        self.get_logger().info(f"Lidar Bridge: Работаю. Порт: {self.lidar_port}. Ожидаю данные из Unreal...")
 
     def receive_lidar(self):
         while True:

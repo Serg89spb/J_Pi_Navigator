@@ -10,13 +10,22 @@ import math
 
 class JewelerBridge(Node):
     def __init__(self):
-        super().__init__('jeweler_bridge')
+        super().__init__('ue_odom_bridge') # Важно: имя ноды должно совпадать с именем в yaml
         
-        # Настройки UDP
+        # Объявляем параметры ROS 2 и задаем дефолтные значения
+        self.declare_parameter('ue_ip', '0.0.0.0')
+        self.declare_parameter('odom_port', 12346)
+        self.declare_parameter('ue_port', 12347)
+
+        # Считываем актуальные значения (из yaml, если он передан)
+        self.ue_ip = self.get_parameter('ue_ip').get_parameter_value().string_value
+        self.odom_port = self.get_parameter('odom_port').get_parameter_value().integer_value
+        self.ue_port = self.get_parameter('ue_port').get_parameter_value().integer_value
+        
         self.udp_ip = "0.0.0.0"
-        self.odom_port = 12346
-        self.ue_ip = "192.168.0.159" # IP Unreal
-        self.ue_port = 12347
+
+        # Логируем параметры, чтобы пользователь видел актуальный IP при старте
+        self.get_logger().info(f"Инициализация Odom Bridge. Подключение к UE IP: {self.ue_ip}")
 
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         self.sock.bind((self.udp_ip, self.odom_port))
@@ -33,7 +42,6 @@ class JewelerBridge(Node):
         self.cmd_sub = self.create_subscription(Twist, 'cmd_vel', self.cmd_callback, 10)
 
         self.create_timer(0.01, self.read_udp)
-        self.get_logger().info("Odom Bridge")
 
     def cmd_callback(self, msg):
         # Отправляем скорости НАЗАД в Unreal

@@ -7,6 +7,8 @@ from launch.launch_description_sources import PythonLaunchDescriptionSource, Fro
 from ament_index_python.packages import get_package_share_directory
 import launch_ros.events.lifecycle
 from lifecycle_msgs.msg import Transition
+import launch.events
+import launch_ros.event_handlers        
 
 def generate_launch_description():
     package_name = 'jeweler_nav'
@@ -18,6 +20,9 @@ def generate_launch_description():
         robot_desc = infp.read()
 
     config_path = os.path.join(pkg_share, 'config', 'mapper_params.yaml')
+    # Путь к файлу конфигурации сети Unreal
+    ue_config_path = os.path.join(pkg_share, 'config', 'unreal_config.yaml')
+
 
     # 2. Настройка SLAM Toolbox (с авто-активацией)
     slam_node = LifecycleNode(
@@ -65,13 +70,15 @@ def generate_launch_description():
 
         # 2. Виртуальный лидар UE
         ExecuteProcess(
-            cmd=['python3', os.path.join(pkg_share, 'scripts', 'ue_lidar_bridge.py')],
+            cmd=['python3', os.path.join(pkg_share, 'scripts', 'ue_lidar_bridge.py'), 
+                 '--ros-args', '--params-file', ue_config_path],
             output='screen'
         ),
 
         # 3. Виртуальная одометрия UE
         ExecuteProcess(
-            cmd=['python3', os.path.join(pkg_share, 'scripts', 'ue_odom_bridge.py')],
+            cmd=['python3', os.path.join(pkg_share, 'scripts', 'ue_odom_bridge.py'), 
+                 '--ros-args', '--params-file', ue_config_path],
             output='screen'
         ),
 
@@ -99,7 +106,8 @@ def generate_launch_description():
 
         # 7. Зрение UE
         ExecuteProcess(
-            cmd=['python3', os.path.join(pkg_share, 'scripts', 'ue_yolo_laser_node.py')],
+            cmd=['python3', os.path.join(pkg_share, 'scripts', 'ue_yolo_laser_node.py'),
+                 '--ros-args', '--params-file', ue_config_path],
             output='screen'
         ),
 

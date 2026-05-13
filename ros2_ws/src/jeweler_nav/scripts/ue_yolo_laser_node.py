@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+import os
 import rclpy
 from rclpy.node import Node
 from sensor_msgs.msg import LaserScan
@@ -54,11 +55,14 @@ class YoloLaserNode(Node):
         self.get_logger().info(">>> Загрузка модели OpenVINO...")
         self.model = YOLO(model_path, task='detect')
         
-        # --- НАСТРОЙКИ UDP СОКЕТА (Взамен rpicam-vid) ---
-        self.port = 12348
+        # --- НАСТРОЙКИ UDP СОКЕТА ИЗ ПАРАМЕТРОВ ROS 2 ---
+        self.declare_parameter('yolo_port', 12348)
+        self.port = self.get_parameter('yolo_port').get_parameter_value().integer_value
+
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         self.sock.bind(('0.0.0.0', self.port))
         self.sock.setblocking(False)
+        
         # Системный буфер на 128Кб, чтобы JPEG не дропался
         self.sock.setsockopt(socket.SOL_SOCKET, socket.SO_RCVBUF, 131072)
         
