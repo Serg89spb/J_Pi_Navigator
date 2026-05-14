@@ -93,7 +93,7 @@ chmod +x install.sh
 
 ### 🔌 Шаг 6. Подключение оборудования и настройка Foxglove
 
-После успешного тестирования камеры можно подключать периферию: **ESP32S3 Chassis** (через USB) и лидар **RPLidar C1**.
+После успешного тестирования камеры можно подключать периферию: [ESP32S3 Chassis](https://github.com/Serg89spb/J_ESP32S3_Chassis) (через USB) и лидар **RPLidar C1**.
 
 Для полноценного мониторинга и визуализации данных робота используется инструмент **Foxglove Studio**:
 
@@ -120,7 +120,7 @@ ros2 launch jeweler_nav robot_launch_nav.py
 ```bash
 ros2 launch jeweler_nav robot_launch_ue_nav.py
 ```
-> 📖 Подробное руководство по настройке виртуального окружения доступно в [Инструкции по работе с Unreal Engine](unreal_simulation_guide.md).
+> 📖 Подробное руководство по настройке виртуального окружения доступно в [Инструкции по работе с Unreal Engine](https://github.com/Serg89spb/J_UE_Sim).
 
 ---
 
